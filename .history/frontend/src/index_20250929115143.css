@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global background */
+html,
+body,
+#root {
+  height: 100%;
+}
+/* Body color is controlled via utility classes in components */
