@@ -5,7 +5,7 @@ const Dashboard = ({ user, stats }) => {
   const progressPercentage = (stats.completedQuests / stats.totalQuests) * 100 || 0;
 
   return (
-  <div className="min-h-screen w-full flex flex-col justify-start space-y-6 px-6 py-8">
+    <div className="h-screen flex flex-col justify-start space-y-6 px-6 py-8">
       <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-8 text-white">
         <h2 className="text-3xl font-bold mb-2">Welcome back, {user.name}! 🎓</h2>
         <p className="text-white/90">Keep up the great work on your learning journey</p>

@@ -6,9 +6,10 @@ const Dashboard = ({ user, stats }) => {
 
   return (
   <div className="min-h-screen w-full flex flex-col justify-start space-y-6 px-6 py-8">
-      <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-8 text-white">
-        <h2 className="text-3xl font-bold mb-2">Welcome back, {user.name}! 🎓</h2>
-        <p className="text-white/90">Keep up the great work on your learning journey</p>
+      <div className="bg-gradient-to-r from-indigo-50 via-sky-50 to-teal-50 rounded-2xl p-8 border border-slate-200 shadow-sm relative overflow-hidden">
+        <h2 className="text-3xl font-bold mb-2 text-slate-800">Welcome back, {user.name}! 🎓</h2>
+        <p className="text-slate-600">Keep up the great work on your learning journey</p>
+        <div className="pointer-events-none absolute inset-0 opacity-40 mix-blend-multiply bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.25),transparent_60%),radial-gradient(circle_at_80%_60%,rgba(56,189,248,0.25),transparent_55%)]" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

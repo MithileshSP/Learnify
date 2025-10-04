@@ -400,26 +400,6 @@ export default function StudentPortal({ user, onLogout, setAuthUser }) {
   const [advisorLoading, setAdvisorLoading] = useState(false);
   const [advisorCooldown, setAdvisorCooldown] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  // Sidebar expansion (hover to expand)
-  const SIDEBAR_EXPANDED = 256; // 16rem (w-64)
-  const SIDEBAR_COLLAPSED = 64; // 4rem (w-16)
-  const [sidebarExpanded, setSidebarExpanded] = useState(false);
-  const [isLarge, setIsLarge] = useState(() =>
-    typeof window !== "undefined"
-      ? window.matchMedia('(min-width: 1024px)').matches
-      : false
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(min-width: 1024px)');
-    const handler = (e) => setIsLarge(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
-  const currentSidebarWidth = sidebarExpanded ? SIDEBAR_EXPANDED : SIDEBAR_COLLAPSED;
-  const sidebarOffset = isLarge ? currentSidebarWidth : 0;
 
   const advisorInsights = useMemo(() => {
     const insights = [];
@@ -711,19 +691,14 @@ export default function StudentPortal({ user, onLogout, setAuthUser }) {
   }, [advisorCooldown]);
 
   return (
-    <div className="min-h-screen text-slate-900 flex flex-col">
-      <aside
-        className={`hidden lg:flex fixed left-0 top-0 bottom-0 flex-col border-r border-slate-200 bg-white/90 backdrop-blur z-20 transition-all duration-300`}
-        style={{ width: isLarge ? currentSidebarWidth : 0 }}
-        onMouseEnter={() => setSidebarExpanded(true)}
-        onMouseLeave={() => setSidebarExpanded(false)}
-      >
-        <div className={`border-b border-slate-100 flex items-center ${sidebarExpanded ? 'px-6 py-8' : 'px-4 py-6 justify-center'} transition-all duration-300`}>
-          <div className="text-2xl font-semibold text-indigo-600 select-none">
-            {sidebarExpanded ? 'LearnOnline' : 'L'}
+  <div className="min-h-screen text-slate-900 flex flex-col">
+      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 flex-col border-r border-slate-200 bg-white/90 backdrop-blur z-20">
+        <div className="px-6 py-8 border-b border-slate-100">
+          <div className="text-2xl font-semibold text-indigo-600">
+            LearnOnline
           </div>
         </div>
-        <nav className={`flex-1 space-y-1 transition-all duration-300 ${sidebarExpanded ? 'px-4 py-6' : 'px-2 py-4'}`}>
+        <nav className="flex-1 px-4 py-6 space-y-1">
           {sidebarLinks.map((link) => {
             const { id, label } = link;
             const Icon = link.icon;
@@ -732,47 +707,28 @@ export default function StudentPortal({ user, onLogout, setAuthUser }) {
               <button
                 key={id}
                 type="button"
-                title={label}
                 onClick={() => setActiveSection(id)}
-                className={`w-full flex items-center rounded-xl ${sidebarExpanded ? 'gap-3 px-4' : 'justify-center px-0'} py-3 text-sm font-medium transition-colors duration-200 ${
+                className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
                   active
-                    ? 'bg-indigo-50 text-indigo-600'
-                    : 'text-slate-500 hover:bg-slate-100'
+                    ? "bg-indigo-50 text-indigo-600"
+                    : "text-slate-500 hover:bg-slate-100"
                 }`}
               >
-                <Icon className="w-5 h-5 shrink-0" />
-                <span
-                  className={`whitespace-nowrap transition-all duration-200 overflow-hidden ${
-                    sidebarExpanded ? 'opacity-100 ml-1' : 'opacity-0 w-0 ml-0'
-                  }`}
-                >
-                  {label}
-                </span>
+                <Icon className="w-5 h-5" />
+                <span>{label}</span>
               </button>
             );
           })}
         </nav>
-        <div className={`border-t border-slate-100 text-sm text-slate-500 transition-all duration-300 ${sidebarExpanded ? 'px-6 py-6' : 'px-2 py-4 text-center'}`}>
-          {sidebarExpanded ? (
-            <>
-              <p className="font-medium text-slate-700">Support</p>
-              <p className="mt-1">Need help? Reach out to your mentor anytime.</p>
-            </>
-          ) : (
-            <p className="font-medium text-slate-600">?</p>
-          )}
+        <div className="px-6 py-6 border-t border-slate-100 text-sm text-slate-500">
+          <p className="font-medium text-slate-700">Support</p>
+          <p className="mt-1">Need help? Reach out to your mentor anytime.</p>
         </div>
       </aside>
 
-      <main
-        className="flex-1"
-        style={{ marginLeft: sidebarOffset, transition: 'margin-left .3s ease' }}
-      >
-        <header
-          className="fixed top-0 right-0 bg-white border-b border-slate-200 z-10"
-          style={{ left: sidebarOffset, transition: 'left .3s ease' }}
-        >
-          <div className="max-w-7xl mx-auto w-full px-8 py-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <main className="flex-1 ml-0 lg:ml-64">
+        <header className="fixed top-0 left-0 right-0 lg:left-64 bg-white border-b border-slate-200 z-10">
+          <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Search className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -815,7 +771,7 @@ export default function StudentPortal({ user, onLogout, setAuthUser }) {
           </div>
   </header>
 
-  <div className="max-w-7xl mx-auto w-full app-content app-content--fixed-header space-y-10 px-8">
+  <div className="max-w-6xl mx-auto app-content app-content--fixed-header space-y-10">
           {error ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-600">
               {error}

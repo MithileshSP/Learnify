@@ -16,23 +16,20 @@
   --sidebar-width: 16rem; /* matches w-64 */
   /* Increase default header height so content offset is noticeable */
   --header-height: 96px; /* header height used for fixed positioning */
-  /* Unified page background (Tailwind slate-100) */
-  --page-bg: #f1f5f9;
 }
 
-/* Base content wrapper: full-page natural scroll (no nested scrollbars). */
+/* Content wrapper used by portal pages to offset fixed header and provide
+   consistent padding. Adjust --header-height if header size changes. */
 .app-content {
   box-sizing: border-box;
-  padding: 1.5rem; /* 24px */
-  min-height: 100vh; /* allow full viewport height before body scroll */
-}
-
-/* Modifier when using a fixed header (e.g. StudentPortal) so content starts
-   below the header but still uses (almost) full viewport height. We DON'T
-   constrain height or add overflow here—body handles scrolling. */
-.app-content--fixed-header {
-  padding-top: calc(var(--header-height) + 1rem);
-  min-height: calc(100vh - var(--header-height) + 1rem);
+  padding: 1.5rem; /* 24px on all sides */
+  padding-top: calc(var(--header-height) + 1rem); /* header + a small gap */
+  /* Use max-height so the content wrapper can grow but still constrain to the
+     viewport. Subtract header height + extra vertical padding so the inner
+     scroll area uses more of the page. Adjust the 3rem value if you change
+     the padding or header size. */
+  max-height: calc(100vh - var(--header-height) - 3rem);
+  overflow: auto;
 }
 
 /* DEBUG: temporary visual aid so it's obvious the content wrapper is applied.
@@ -41,7 +38,6 @@
 
 html, body, #root {
   height: 100%;
-  background: var(--page-bg);
 }
 
 .logo {

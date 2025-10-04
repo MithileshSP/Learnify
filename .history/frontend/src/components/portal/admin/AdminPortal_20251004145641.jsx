@@ -235,7 +235,7 @@ export default function AdminPortal({ user, onLogout }) {
   );
 }
 
-function StatCard({ icon: Icon,label, value, accent, loading }) {
+function StatCard({ icon: icon,label, value, accent, loading }) {
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-6">
       <div

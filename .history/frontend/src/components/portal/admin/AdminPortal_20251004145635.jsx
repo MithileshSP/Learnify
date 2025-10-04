@@ -235,13 +235,13 @@ export default function AdminPortal({ user, onLogout }) {
   );
 }
 
-function StatCard({ icon: Icon,label, value, accent, loading }) {
+function StatCard({ icon: label, value, accent, loading }) {
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-6">
       <div
         className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br ${accent} text-white mb-4`}
       >
-        <Icon className="w-6 h-6" />
+        
       </div>
       <p className="text-sm text-gray-500 uppercase tracking-wide">{label}</p>
       <p className="mt-2 text-3xl font-bold text-gray-900">

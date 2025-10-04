@@ -16,8 +16,6 @@
   --sidebar-width: 16rem; /* matches w-64 */
   /* Increase default header height so content offset is noticeable */
   --header-height: 96px; /* header height used for fixed positioning */
-  /* Unified page background (Tailwind slate-100) */
-  --page-bg: #f1f5f9;
 }
 
 /* Base content wrapper: full-page natural scroll (no nested scrollbars). */
@@ -41,7 +39,6 @@
 
 html, body, #root {
   height: 100%;
-  background: var(--page-bg);
 }
 
 .logo {

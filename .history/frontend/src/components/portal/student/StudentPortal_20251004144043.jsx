@@ -772,7 +772,7 @@ export default function StudentPortal({ user, onLogout, setAuthUser }) {
           className="fixed top-0 right-0 bg-white border-b border-slate-200 z-10"
           style={{ left: sidebarOffset, transition: 'left .3s ease' }}
         >
-          <div className="max-w-7xl mx-auto w-full px-8 py-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Search className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -815,7 +815,7 @@ export default function StudentPortal({ user, onLogout, setAuthUser }) {
           </div>
   </header>
 
-  <div className="max-w-7xl mx-auto w-full app-content app-content--fixed-header space-y-10 px-8">
+  <div className="max-w-6xl mx-auto app-content app-content--fixed-header space-y-10">
           {error ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-600">
               {error}

@@ -259,7 +259,7 @@ export default function FacultyPortal({ user, onLogout }) {
   return (
   <div className="min-h-screen flex flex-col">
       <header className="bg-white border-b border-slate-200">
-  <div className="max-w-7xl mx-auto px-8 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500">
               Faculty Workspace
@@ -296,7 +296,7 @@ export default function FacultyPortal({ user, onLogout }) {
       </header>
 
       {toast ? (
-  <div className="max-w-7xl mx-auto px-8 mt-4">
+        <div className="max-w-7xl mx-auto px-6 mt-4">
           <div
             className={`rounded-2xl px-4 py-3 text-sm font-medium shadow-sm border ${
               toast.tone === "error"
@@ -309,7 +309,7 @@ export default function FacultyPortal({ user, onLogout }) {
         </div>
       ) : null}
 
-  <main className="max-w-7xl mx-auto w-full app-content space-y-10 px-8">
+  <main className="max-w-7xl mx-auto app-content space-y-10">
         {error ? (
           <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-3xl">
             {error}

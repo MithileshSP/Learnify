@@ -36,9 +36,9 @@ export default function AdminPortal({ user, onLogout }) {
   const totals = overview?.totals ?? {};
 
   return (
-  <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gray-100">
       <header className="bg-gradient-to-r from-slate-900 via-purple-900 to-indigo-900 text-white shadow-lg">
-  <div className="max-w-7xl mx-auto px-8 py-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
             <p className="text-sm text-white/60 uppercase tracking-wide">
               Admin Console
@@ -74,7 +74,7 @@ export default function AdminPortal({ user, onLogout }) {
         </div>
       </header>
 
-  <main className="max-w-7xl mx-auto w-full app-content space-y-10 px-8">
+  <main className="max-w-7xl mx-auto app-content space-y-10">
         {error ? (
           <div className="bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
             {error}
@@ -235,7 +235,7 @@ export default function AdminPortal({ user, onLogout }) {
   );
 }
 
-function StatCard({ icon: Icon,label, value, accent, loading }) {
+function StatCard({ icon: label, value, accent, loading }) {
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-6">
       <div
