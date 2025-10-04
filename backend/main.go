@@ -8,26 +8,31 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/handlers"
+	gorillahandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"backend/handlers"
+	"backend/middleware"
 )
 
 var (
-	client           *mongo.Client
-	database         *mongo.Database
-	usersCol         *mongo.Collection
-	questsCol        *mongo.Collection
-	pollsCol         *mongo.Collection
-	votesCol         *mongo.Collection
-	userQuestsCol    *mongo.Collection
-	researchPostsCol *mongo.Collection
+	client               *mongo.Client
+	database             *mongo.Database
+	usersCol             *mongo.Collection
+	questsCol            *mongo.Collection
+	pollsCol             *mongo.Collection
+	votesCol             *mongo.Collection
+	userQuestsCol        *mongo.Collection
+	researchPostsCol     *mongo.Collection
 	facultyDashboardsCol *mongo.Collection
-	jwtSecret        string
+	geminiAPIKey         string
+	geminiModel          string
+	jwtSecret            string
 )
 
 func main() {
@@ -83,6 +88,19 @@ func main() {
 	researchPostsCol = database.Collection("research_posts")
 	facultyDashboardsCol = database.Collection("faculty_dashboards")
 
+	handlers.Configure(handlers.Dependencies{
+		UsersCol:             usersCol,
+		QuestsCol:            questsCol,
+		PollsCol:             pollsCol,
+		VotesCol:             votesCol,
+		UserQuestsCol:        userQuestsCol,
+		ResearchPostsCol:     researchPostsCol,
+		FacultyDashboardsCol: facultyDashboardsCol,
+		GeminiAPIKey:         geminiAPIKey,
+		GeminiModel:          geminiModel,
+		JWTSecret:            jwtSecret,
+	})
+
 	// Insert sample data
 	go insertSampleData()
 
@@ -96,36 +114,34 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`))
 	}).Methods("GET")
-	api.HandleFunc("/auth/login", loginHandler).Methods("POST")
-
+	api.HandleFunc("/auth/login", handlers.LoginHandler).Methods("POST")
 	// Protected routes
 	protected := api.PathPrefix("").Subrouter()
-	protected.Use(authMiddleware)
-	protected.HandleFunc("/me", getMeHandler).Methods("GET")
-	protected.HandleFunc("/user/{id}", getUser).Methods("GET")
-	protected.HandleFunc("/quests", getQuests).Methods("GET")
-	protected.HandleFunc("/quests/{id}/complete", completeQuest).Methods("POST")
-	protected.HandleFunc("/leaderboard", getLeaderboard).Methods("GET")
-	protected.HandleFunc("/polls", getPolls).Methods("GET")
-	protected.HandleFunc("/polls/{id}/vote", voteOnPoll).Methods("POST")
-	protected.HandleFunc("/ai/chat", aiChat).Methods("POST")
-	protected.HandleFunc("/student/dashboard", withRoles(getStudentDashboard, RoleStudent, RoleAdmin)).Methods("GET")
-	protected.HandleFunc("/admin/overview", withRoles(getAdminOverview, RoleAdmin)).Methods("GET")
-	protected.HandleFunc("/faculty/overview", withRoles(getFacultyOverview, RoleFaculty, RoleAdmin)).Methods("GET")
-	protected.HandleFunc("/faculty/dashboard", withRoles(getFacultyOverview, RoleFaculty, RoleAdmin)).Methods("GET")
-	protected.HandleFunc("/faculty/dashboard/ai/{id}/review", withRoles(reviewFacultyAISuggestion, RoleFaculty, RoleAdmin)).Methods("POST")
-	protected.HandleFunc("/faculty/dashboard/mentorship", withRoles(addFacultyMentee, RoleFaculty, RoleAdmin)).Methods("POST")
-	protected.HandleFunc("/faculty/dashboard/mentorship/{id}/status", withRoles(updateFacultyMenteeStatus, RoleFaculty, RoleAdmin)).Methods("POST")
-	protected.HandleFunc("/faculty/dashboard/courses", withRoles(addFacultyCourse, RoleFaculty, RoleAdmin)).Methods("POST")
-	protected.HandleFunc("/faculty/dashboard/courses/{id}/status", withRoles(updateFacultyCourseStatus, RoleFaculty, RoleAdmin)).Methods("POST")
-	protected.HandleFunc("/research/posts", getResearchPosts).Methods("GET")
-	protected.HandleFunc("/research/posts", createResearchPost).Methods("POST")
-
+	protected.Use(middleware.NewAuthMiddleware(jwtSecret))
+	protected.HandleFunc("/me", handlers.GetMeHandler).Methods("GET")
+	protected.HandleFunc("/user/{id}", handlers.GetUser).Methods("GET")
+	protected.HandleFunc("/quests", handlers.GetQuests).Methods("GET")
+	protected.HandleFunc("/quests/{id}/complete", handlers.CompleteQuest).Methods("POST")
+	protected.HandleFunc("/leaderboard", handlers.GetLeaderboard).Methods("GET")
+	protected.HandleFunc("/polls", handlers.GetPolls).Methods("GET")
+	protected.HandleFunc("/polls/{id}/vote", handlers.VoteOnPoll).Methods("POST")
+	protected.HandleFunc("/ai/chat", handlers.AIChat).Methods("POST")
+	protected.HandleFunc("/student/dashboard", handlers.WithRoles(handlers.GetStudentDashboard, handlers.RoleStudent, handlers.RoleAdmin)).Methods("GET")
+	protected.HandleFunc("/admin/overview", handlers.WithRoles(handlers.GetAdminOverview, handlers.RoleAdmin)).Methods("GET")
+	protected.HandleFunc("/faculty/overview", handlers.WithRoles(handlers.GetFacultyOverview, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("GET")
+	protected.HandleFunc("/faculty/dashboard", handlers.WithRoles(handlers.GetFacultyOverview, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("GET")
+	protected.HandleFunc("/faculty/dashboard/ai/{id}/review", handlers.WithRoles(handlers.ReviewFacultyAISuggestion, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("POST")
+	protected.HandleFunc("/faculty/dashboard/mentorship", handlers.WithRoles(handlers.AddFacultyMentee, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("POST")
+	protected.HandleFunc("/faculty/dashboard/mentorship/{id}/status", handlers.WithRoles(handlers.UpdateFacultyMenteeStatus, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("POST")
+	protected.HandleFunc("/faculty/dashboard/courses", handlers.WithRoles(handlers.AddFacultyCourse, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("POST")
+	protected.HandleFunc("/faculty/dashboard/courses/{id}/status", handlers.WithRoles(handlers.UpdateFacultyCourseStatus, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("POST")
+	protected.HandleFunc("/research/posts", handlers.GetResearchPosts).Methods("GET")
+	protected.HandleFunc("/research/posts", handlers.CreateResearchPost).Methods("POST")
 	// CORS
-	corsHandler := handlers.CORS(
-		handlers.AllowedOrigins([]string{"*"}),
-		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
-		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+	corsHandler := gorillahandlers.CORS(
+		gorillahandlers.AllowedOrigins([]string{"*"}),
+		gorillahandlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		gorillahandlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
 	)
 
 	handler := corsHandler(r)
@@ -164,8 +180,7 @@ func insertSampleData() {
 			name:              "Alex Sharma",
 			email:             "alex@learnonline.edu",
 			password:          "student123",
-			role:              RoleStudent,
-			coins:             11250,
+			role:              handlers.RoleStudent,
 			streak:            14,
 			academicStanding:  90,
 			gamificationLevel: 60,
@@ -181,7 +196,7 @@ func insertSampleData() {
 			name:              "Jordan Lee",
 			email:             "jordan@learnonline.edu",
 			password:          "student123",
-			role:              RoleStudent,
+			role:              handlers.RoleStudent,
 			coins:             12500,
 			streak:            18,
 			academicStanding:  92,
@@ -196,7 +211,7 @@ func insertSampleData() {
 			name:              "Casey Wong",
 			email:             "casey@learnonline.edu",
 			password:          "student123",
-			role:              RoleStudent,
+			role:              handlers.RoleStudent,
 			coins:             11800,
 			streak:            12,
 			academicStanding:  88,
@@ -209,7 +224,7 @@ func insertSampleData() {
 			name:              "Taylor Green",
 			email:             "taylor@learnonline.edu",
 			password:          "student123",
-			role:              RoleStudent,
+			role:              handlers.RoleStudent,
 			coins:             10900,
 			streak:            10,
 			academicStanding:  86,
@@ -222,7 +237,7 @@ func insertSampleData() {
 			name:              "Samira Khan",
 			email:             "samira@learnonline.edu",
 			password:          "student123",
-			role:              RoleStudent,
+			role:              handlers.RoleStudent,
 			coins:             10100,
 			streak:            8,
 			academicStanding:  84,
@@ -235,8 +250,7 @@ func insertSampleData() {
 			name:              "Dr. Meera Iyer",
 			email:             "meera@learnonline.edu",
 			password:          "faculty123",
-			role:              RoleFaculty,
-			coins:             5400,
+			role:              handlers.RoleFaculty,
 			streak:            6,
 			academicStanding:  0,
 			gamificationLevel: 0,
@@ -251,8 +265,7 @@ func insertSampleData() {
 			name:              "Admin User",
 			email:             "admin@learnonline.edu",
 			password:          "admin123",
-			role:              RoleAdmin,
-			coins:             6000,
+			role:              handlers.RoleAdmin,
 			streak:            4,
 			academicStanding:  0,
 			gamificationLevel: 0,
@@ -262,7 +275,7 @@ func insertSampleData() {
 	}
 
 	for _, seed := range seedUsers {
-		hash, err := hashPassword(seed.password)
+		hash, err := middleware.HashPassword(seed.password)
 		if err != nil {
 			log.Printf("failed to hash password for %s: %v", seed.email, err)
 			continue
@@ -515,37 +528,37 @@ func insertSampleData() {
 			},
 			"courses": []bson.M{
 				{
-					"_id":         courseIntroID,
-					"title":       "Introduction to Computer Science",
-					"status":      "published",
-					"code":        "CS101",
+					"_id":          courseIntroID,
+					"title":        "Introduction to Computer Science",
+					"status":       "published",
+					"code":         "CS101",
 					"last_updated": now.Add(-72 * time.Hour),
 				},
 				{
-					"_id":         courseCalcID,
-					"title":       "Calculus II",
-					"status":      "published",
-					"code":        "MTH202",
+					"_id":          courseCalcID,
+					"title":        "Calculus II",
+					"status":       "published",
+					"code":         "MTH202",
 					"last_updated": now.Add(-48 * time.Hour),
 				},
 				{
-					"_id":         courseEthicsID,
-					"title":       "Ethics in AI",
-					"status":      "draft",
-					"code":        "ETH310",
+					"_id":          courseEthicsID,
+					"title":        "Ethics in AI",
+					"status":       "draft",
+					"code":         "ETH310",
 					"last_updated": now.Add(-12 * time.Hour),
 				},
 				{
-					"_id":         courseHistoryID,
-					"title":       "World History: Ancient Civilizations",
-					"status":      "archived",
-					"code":        "HIS210",
+					"_id":          courseHistoryID,
+					"title":        "World History: Ancient Civilizations",
+					"status":       "archived",
+					"code":         "HIS210",
 					"last_updated": now.Add(-240 * time.Hour),
 				},
 			},
 			"analytics": bson.M{
-				"labels":   []string{"Jan", "Feb", "Mar", "Apr", "May"},
-				"students": []int{120, 132, 128, 140, 152},
+				"labels":    []string{"Jan", "Feb", "Mar", "Apr", "May"},
+				"students":  []int{120, 132, 128, 140, 152},
 				"avg_grade": []int{88, 87, 89, 90, 92},
 			},
 			"created_at": now,

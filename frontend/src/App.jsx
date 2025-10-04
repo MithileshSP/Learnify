@@ -1,9 +1,9 @@
 import "./App.css";
 import Login from "./pages/Login.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
-import StudentPortal from "./components/portal/StudentPortal.jsx";
-import AdminPortal from "./components/portal/AdminPortal.jsx";
-import FacultyPortal from "./components/portal/FacultyPortal.jsx";
+import StudentPortal from "./components/portal/student/StudentPortal.jsx";
+import AdminPortal from "./components/portal/admin/AdminPortal.jsx";
+import FacultyPortal from "./components/portal/faculty/FacultyPortal.jsx";
 
 const Role = {
   Admin: "admin",
