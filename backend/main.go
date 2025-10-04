@@ -16,7 +16,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"backend/handlers"
+	adminHandlers "backend/handlers/admin"
+	"backend/handlers/common"
+	facultyHandlers "backend/handlers/faculty"
+	researchHandlers "backend/handlers/research"
+	studentHandlers "backend/handlers/student"
 	"backend/middleware"
 )
 
@@ -88,18 +92,18 @@ func main() {
 	researchPostsCol = database.Collection("research_posts")
 	facultyDashboardsCol = database.Collection("faculty_dashboards")
 
-	handlers.Configure(handlers.Dependencies{
-		UsersCol:             usersCol,
-		QuestsCol:            questsCol,
-		PollsCol:             pollsCol,
-		VotesCol:             votesCol,
-		UserQuestsCol:        userQuestsCol,
-		ResearchPostsCol:     researchPostsCol,
-		FacultyDashboardsCol: facultyDashboardsCol,
-		GeminiAPIKey:         geminiAPIKey,
-		GeminiModel:          geminiModel,
-		JWTSecret:            jwtSecret,
-	})
+    common.Configure(common.Dependencies{
+        UsersCol:             usersCol,
+        QuestsCol:            questsCol,
+        PollsCol:             pollsCol,
+        VotesCol:             votesCol,
+        UserQuestsCol:        userQuestsCol,
+        ResearchPostsCol:     researchPostsCol,
+        FacultyDashboardsCol: facultyDashboardsCol,
+        GeminiAPIKey:         geminiAPIKey,
+        GeminiModel:          geminiModel,
+        JWTSecret:            jwtSecret,
+    })
 
 	// Insert sample data
 	go insertSampleData()
@@ -114,29 +118,29 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`))
 	}).Methods("GET")
-	api.HandleFunc("/auth/login", handlers.LoginHandler).Methods("POST")
+	api.HandleFunc("/auth/login", common.LoginHandler).Methods("POST")
 	// Protected routes
 	protected := api.PathPrefix("").Subrouter()
 	protected.Use(middleware.NewAuthMiddleware(jwtSecret))
-	protected.HandleFunc("/me", handlers.GetMeHandler).Methods("GET")
-	protected.HandleFunc("/user/{id}", handlers.GetUser).Methods("GET")
-	protected.HandleFunc("/quests", handlers.GetQuests).Methods("GET")
-	protected.HandleFunc("/quests/{id}/complete", handlers.CompleteQuest).Methods("POST")
-	protected.HandleFunc("/leaderboard", handlers.GetLeaderboard).Methods("GET")
-	protected.HandleFunc("/polls", handlers.GetPolls).Methods("GET")
-	protected.HandleFunc("/polls/{id}/vote", handlers.VoteOnPoll).Methods("POST")
-	protected.HandleFunc("/ai/chat", handlers.AIChat).Methods("POST")
-	protected.HandleFunc("/student/dashboard", handlers.WithRoles(handlers.GetStudentDashboard, handlers.RoleStudent, handlers.RoleAdmin)).Methods("GET")
-	protected.HandleFunc("/admin/overview", handlers.WithRoles(handlers.GetAdminOverview, handlers.RoleAdmin)).Methods("GET")
-	protected.HandleFunc("/faculty/overview", handlers.WithRoles(handlers.GetFacultyOverview, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("GET")
-	protected.HandleFunc("/faculty/dashboard", handlers.WithRoles(handlers.GetFacultyOverview, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("GET")
-	protected.HandleFunc("/faculty/dashboard/ai/{id}/review", handlers.WithRoles(handlers.ReviewFacultyAISuggestion, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("POST")
-	protected.HandleFunc("/faculty/dashboard/mentorship", handlers.WithRoles(handlers.AddFacultyMentee, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("POST")
-	protected.HandleFunc("/faculty/dashboard/mentorship/{id}/status", handlers.WithRoles(handlers.UpdateFacultyMenteeStatus, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("POST")
-	protected.HandleFunc("/faculty/dashboard/courses", handlers.WithRoles(handlers.AddFacultyCourse, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("POST")
-	protected.HandleFunc("/faculty/dashboard/courses/{id}/status", handlers.WithRoles(handlers.UpdateFacultyCourseStatus, handlers.RoleFaculty, handlers.RoleAdmin)).Methods("POST")
-	protected.HandleFunc("/research/posts", handlers.GetResearchPosts).Methods("GET")
-	protected.HandleFunc("/research/posts", handlers.CreateResearchPost).Methods("POST")
+	protected.HandleFunc("/me", common.GetMeHandler).Methods("GET")
+	protected.HandleFunc("/user/{id}", studentHandlers.GetUser).Methods("GET")
+	protected.HandleFunc("/quests", studentHandlers.GetQuests).Methods("GET")
+	protected.HandleFunc("/quests/{id}/complete", studentHandlers.CompleteQuest).Methods("POST")
+	protected.HandleFunc("/leaderboard", studentHandlers.GetLeaderboard).Methods("GET")
+	protected.HandleFunc("/polls", studentHandlers.GetPolls).Methods("GET")
+	protected.HandleFunc("/polls/{id}/vote", studentHandlers.VoteOnPoll).Methods("POST")
+	// Research & AI endpoints (AI not yet reimplemented after refactor; research restored)
+	protected.HandleFunc("/research/posts", researchHandlers.GetPosts).Methods("GET")
+	protected.HandleFunc("/research/posts", researchHandlers.CreatePost).Methods("POST")
+	protected.HandleFunc("/student/dashboard", common.WithRoles(studentHandlers.GetStudentDashboard, common.RoleStudent, common.RoleAdmin)).Methods("GET")
+	protected.HandleFunc("/admin/overview", common.WithRoles(adminHandlers.GetOverview, common.RoleAdmin)).Methods("GET")
+	protected.HandleFunc("/faculty/overview", common.WithRoles(facultyHandlers.GetOverview, common.RoleFaculty, common.RoleAdmin)).Methods("GET")
+	protected.HandleFunc("/faculty/dashboard", common.WithRoles(facultyHandlers.GetOverview, common.RoleFaculty, common.RoleAdmin)).Methods("GET")
+	protected.HandleFunc("/faculty/dashboard/ai/{id}/review", common.WithRoles(facultyHandlers.ReviewAISuggestion, common.RoleFaculty, common.RoleAdmin)).Methods("POST")
+	protected.HandleFunc("/faculty/dashboard/mentorship", common.WithRoles(facultyHandlers.AddMentee, common.RoleFaculty, common.RoleAdmin)).Methods("POST")
+	protected.HandleFunc("/faculty/dashboard/mentorship/{id}/status", common.WithRoles(facultyHandlers.UpdateMenteeStatus, common.RoleFaculty, common.RoleAdmin)).Methods("POST")
+	protected.HandleFunc("/faculty/dashboard/courses", common.WithRoles(facultyHandlers.AddCourse, common.RoleFaculty, common.RoleAdmin)).Methods("POST")
+	protected.HandleFunc("/faculty/dashboard/courses/{id}/status", common.WithRoles(facultyHandlers.UpdateCourseStatus, common.RoleFaculty, common.RoleAdmin)).Methods("POST")
 	// CORS
 	corsHandler := gorillahandlers.CORS(
 		gorillahandlers.AllowedOrigins([]string{"*"}),
@@ -180,7 +184,7 @@ func insertSampleData() {
 			name:              "Alex Sharma",
 			email:             "alex@learnonline.edu",
 			password:          "student123",
-			role:              handlers.RoleStudent,
+			role:              common.RoleStudent,
 			streak:            14,
 			academicStanding:  90,
 			gamificationLevel: 60,
@@ -196,7 +200,7 @@ func insertSampleData() {
 			name:              "Jordan Lee",
 			email:             "jordan@learnonline.edu",
 			password:          "student123",
-			role:              handlers.RoleStudent,
+			role:              common.RoleStudent,
 			coins:             12500,
 			streak:            18,
 			academicStanding:  92,
@@ -211,7 +215,7 @@ func insertSampleData() {
 			name:              "Casey Wong",
 			email:             "casey@learnonline.edu",
 			password:          "student123",
-			role:              handlers.RoleStudent,
+			role:              common.RoleStudent,
 			coins:             11800,
 			streak:            12,
 			academicStanding:  88,
@@ -224,7 +228,7 @@ func insertSampleData() {
 			name:              "Taylor Green",
 			email:             "taylor@learnonline.edu",
 			password:          "student123",
-			role:              handlers.RoleStudent,
+			role:              common.RoleStudent,
 			coins:             10900,
 			streak:            10,
 			academicStanding:  86,
@@ -237,7 +241,7 @@ func insertSampleData() {
 			name:              "Samira Khan",
 			email:             "samira@learnonline.edu",
 			password:          "student123",
-			role:              handlers.RoleStudent,
+			role:              common.RoleStudent,
 			coins:             10100,
 			streak:            8,
 			academicStanding:  84,
@@ -250,7 +254,7 @@ func insertSampleData() {
 			name:              "Dr. Meera Iyer",
 			email:             "meera@learnonline.edu",
 			password:          "faculty123",
-			role:              handlers.RoleFaculty,
+			role:              common.RoleFaculty,
 			streak:            6,
 			academicStanding:  0,
 			gamificationLevel: 0,
@@ -265,7 +269,7 @@ func insertSampleData() {
 			name:              "Admin User",
 			email:             "admin@learnonline.edu",
 			password:          "admin123",
-			role:              handlers.RoleAdmin,
+			role:              common.RoleAdmin,
 			streak:            4,
 			academicStanding:  0,
 			gamificationLevel: 0,
